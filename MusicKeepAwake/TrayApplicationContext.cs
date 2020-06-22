@@ -11,7 +11,8 @@ namespace MusicKeepAwake
     {
         private const string IconOff = "dialog-block.ico";
         private const string IconOn = "dialog-apply.ico";
-        private const string Tooltip = "Keep Computer From Sleeping";
+        private const string Tooltip = "Prevent Sleep when music is playing";
+        private const string Message = "Got Music? : ";
 
         private System.ComponentModel.IContainer components;    // a list of components to dispose when the context is disposed
 
@@ -23,7 +24,11 @@ namespace MusicKeepAwake
         private AboutBox _mainWindow;
         private System.Timers.Timer _timer;
         private bool _enabled;
+        
         private ToolStripMenuItem _status;
+        private ToolStripMenuItem _on;
+        private ToolStripMenuItem _off;
+
         private string _statusData = "";
 
         public TrayApplicationContext()
@@ -35,7 +40,7 @@ namespace MusicKeepAwake
             _onIcon = new Icon(IconOn);
             _offIcon = new Icon(IconOff);
 
-            CheckAudioStatus();
+            CheckAudio();
 
             InitializeContext();
         }
@@ -63,6 +68,7 @@ namespace MusicKeepAwake
             //notifyIcon.MouseUp += notifyIcon_MouseUp;
 
             _enabled = true;
+            SetChecks();
             _timer.Start();
         }
 
@@ -74,17 +80,17 @@ namespace MusicKeepAwake
             _notifyIcon.ContextMenuStrip.Items.Add(new ToolStripSeparator());
             ToolStripMenuItem temp;
 
-            temp = new ToolStripMenuItem(String.Format("Status: {0}", _statusData));
-            _status = temp;
-            _notifyIcon.ContextMenuStrip.Items.Add(temp);
+            _status = new ToolStripMenuItem();
+            SetStatus();
+            _notifyIcon.ContextMenuStrip.Items.Add(_status);
 
-            temp = new ToolStripMenuItem("&Start");
-            temp.Click += StartClick;
-            _notifyIcon.ContextMenuStrip.Items.Add(temp);
+            _on = new ToolStripMenuItem("&On");
+            _on.Click += StartClick;
+            _notifyIcon.ContextMenuStrip.Items.Add(_on);
 
-            temp = new ToolStripMenuItem("&Stop");
-            temp.Click += StopClick;
-            _notifyIcon.ContextMenuStrip.Items.Add(temp);
+            _off = new ToolStripMenuItem("&Off");
+            _off.Click += StopClick;
+            _notifyIcon.ContextMenuStrip.Items.Add(_off);
 
             _notifyIcon.ContextMenuStrip.Items.Add(new ToolStripSeparator());
 
@@ -94,10 +100,15 @@ namespace MusicKeepAwake
 
         }
 
+        private void SetStatus()
+        {
+            _status.Text = String.Format("{0}{1}", Message, _statusData);
+        }
+
         private void ContextMenuStripOpening(object sender, System.ComponentModel.CancelEventArgs e)
         {
-            CheckAudioStatus();
-            _status.Text = String.Format("Status: {0}", _statusData);
+            CheckAudio();
+            SetStatus();
         }
 
         private void exit()
@@ -118,6 +129,7 @@ namespace MusicKeepAwake
             _notifyIcon.Icon = _onIcon;
             _timer.Start();
             _enabled = true;
+            SetChecks();
         }
 
         private void StopClick(object sender, EventArgs e)
@@ -127,8 +139,15 @@ namespace MusicKeepAwake
 
             _notifyIcon.Icon = _offIcon;
             _timer.Stop();
-            _status.Text = "Status:";
+            _status.Text = Message;
             _enabled = false;
+            SetChecks();
+        }
+
+        private void SetChecks()
+        {
+            _on.Checked = _enabled;
+            _off.Checked = !_enabled;
         }
 
         void _notifyIcon_MouseDown(object sender, MouseEventArgs e)
@@ -147,10 +166,10 @@ namespace MusicKeepAwake
 
         private void OnTimedEvent(Object source, ElapsedEventArgs e)
         {
-            CheckAudioStatus();
+            CheckAudio();
         }
 
-        private void CheckAudioStatus()
+        private void CheckAudio()
         {
 
             if (!_enabled)
